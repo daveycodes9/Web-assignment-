@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSC426</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #eee; font-family: "Courier New", monospace; min-height: 100vh; padding: 30px 20px; }
+  .page-title { color: #fff; font-size: 15px; text-align: center; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 14px; }
+  .cols { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+  .col { width: 290px; }
+  .col-title { font-size: 12px; letter-spacing: 2px; color: #888; text-transform: uppercase; margin-bottom: 14px; }
+  .screen { background: #000; border: 1px solid #444; color: #fff; padding: 10px 14px; font-size: 26px; text-align: right; min-height: 55px; margin-bottom: 10px; word-break: break-all; }
+  .kgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .k { padding: 13px 0; font-size: 15px; text-align: center; cursor: pointer; border: 1px solid #333; background: #1a1a1a; color: #eee; font-family: "Courier New", monospace; }
+  .k:hover { background: #2a2a2a; }
+  .k.op { color: #bbb; background: #1e1e1e; }
+  .k.cl { background: #2d2d2d; color: #ccc; }
+  .k.eq { background: #fff; color: #000; grid-column: span 2; font-weight: bold; }
+  .k.eq:hover { background: #ddd; }
+  .fld { margin-bottom: 14px; }
+  .fld span { display: block; font-size: 11px; letter-spacing: 1px; color: #888; margin-bottom: 6px; text-transform: uppercase; }
+  .fld input { width: 100%; background: #000; border: 1px solid #444; color: #eee; padding: 9px 10px; font-family: "Courier New", monospace; font-size: 13px; }
+  .fld input:focus { outline: none; border-color: #aaa; }
+  .verr { font-size: 11px; color: #e55; margin-top: 4px; display: none; }
+  .verr.on { display: block; }
+  .row-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .row-btns button { flex: 1; padding: 10px; border: 1px solid #555; background: transparent; color: #eee; font-family: "Courier New", monospace; font-size: 13px; cursor: pointer; letter-spacing: 1px; }
+  .row-btns button:hover { background: #222; }
+  .row-btns .primary { border-color: #eee; background: #eee; color: #000; }
+  .row-btns .primary:hover { background: #ccc; }
+  .noti { margin-top: 14px; padding: 10px; border: 1px solid #333; font-size: 13px; display: none; color: #ccc; }
+  .noti.ok { border-color: #555; color: #aaa; }
+  .noti.err { border-color: #633; color: #e88; }
+</style>
+</head>
+<body>
+<div class="page-title">CSC 426 - Practical Assignment</div>
+<div class="cols">
+
+  <div class="col">
+    <div class="col-title">Calculator</div>
+    <div class="screen" id="scr">0</div>
+    <div class="kgrid">
+      <button class="k cl" onclick="c()">C</button>
+      <button class="k op" onclick="o('^')">^</button>
+      <button class="k op" onclick="o('%')">%</button>
+      <button class="k op" onclick="o('/')">/</button>
+      <button class="k" onclick="n('7')">7</button>
+      <button class="k" onclick="n('8')">8</button>
+      <button class="k" onclick="n('9')">9</button>
+      <button class="k op" onclick="o('*')">*</button>
+      <button class="k" onclick="n('4')">4</button>
+      <button class="k" onclick="n('5')">5</button>
+      <button class="k" onclick="n('6')">6</button>
+      <button class="k op" onclick="o('-')">-</button>
+      <button class="k" onclick="n('1')">1</button>
+      <button class="k" onclick="n('2')">2</button>
+      <button class="k" onclick="n('3')">3</button>
+      <button class="k op" onclick="o('+')">+</button>
+      <button class="k" onclick="n('0')">0</button>
+      <button class="k" onclick="n('.')">.</button>
+      <button class="k eq" onclick="ev()">=</button>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-title">Login</div>
+    <div class="fld">
+      <span>Username</span>
+      <input type="text" id="u" autocomplete="off" placeholder="enter username">
+      <div class="verr" id="uve">Username required.</div>
+    </div>
+    <div class="fld">
+      <span>Password</span>
+      <input type="password" id="p" placeholder="enter password">
+      <div class="verr" id="pve">At least 6 characters.</div>
+    </div>
+    <div class="row-btns">
+      <button class="primary" onclick="lg()">Login</button>
+      <button onclick="rs()">Clear</button>
+    </div>
+    <div class="noti" id="nt"></div>
+  </div>
+
+</div>
+<script>
+  var ex = '', jc = false;
+  function sd(v) { document.getElementById('scr').textContent = v || '0'; }
+  function n(d) {
+    if (jc) { ex = ''; jc = false; }
+    if (d === '.' && ex.split(/[+\-*/%^]/).pop().includes('.')) return;
+    ex += d; sd(ex);
+  }
+  function o(op) {
+    jc = false;
+    if (!ex && op !== '-') return;
+    if (ex && '+-*/%^'.includes(ex.slice(-1))) ex = ex.slice(0,-1);
+    ex += op; sd(ex);
+  }
+  function c() { ex = ''; jc = false; sd('0'); }
+  function ev() {
+    if (!ex) return;
+    try {
+      var r = Function('"use strict";return(' + ex.replace(/\^/g,'**') + ')')();
+      if (!isFinite(r)) { sd('Err'); ex = ''; return; }
+      r = parseFloat(r.toFixed(10));
+      ex = String(r); sd(ex); jc = true;
+    } catch(e) { sd('Err'); ex = ''; }
+  }
+
+  function lg() {
+    var u = document.getElementById('u').value.trim();
+    var p = document.getElementById('p').value;
+    var uve = document.getElementById('uve');
+    var pve = document.getElementById('pve');
+    var nt = document.getElementById('nt');
+    uve.className = 'verr'; pve.className = 'verr'; nt.style.display = 'none';
+    var ok = true;
+    if (!u) { uve.className = 'verr on'; ok = false; }
+    if (p.length < 6) { pve.className = 'verr on'; ok = false; }
+    if (!ok) return;
+    nt.style.display = 'block';
+    if (u === 'admin' && p === 'admin123') {
+      nt.className = 'noti ok';
+      nt.textContent = '> access granted. hello, ' + u + '.';
+    } else {
+      nt.className = 'noti err';
+      nt.textContent = '> error: invalid credentials.';
+    }
+  }
+
+  function rs() {
+    document.getElementById('u').value = '';
+    document.getElementById('p').value = '';
+    document.getElementById('uve').className = 'verr';
+    document.getElementById('pve').className = 'verr';
+    var nt = document.getElementById('nt');
+    nt.style.display = 'none'; nt.className = 'noti';
+  }
+</script>
+</body>
+</html>
